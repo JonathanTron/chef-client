@@ -50,7 +50,11 @@ module Opscode
       def create_directories
         return if node["platform"] == "windows"
 
-        chef_server = chef_server? && chef_user_exists?
+        chef_user, chef_group = if chef_server? && chef_user_exists?
+          ["chef", "chef"]
+        else
+          [root_user, root_group]
+        end
         %w{run_path cache_path backup_path log_dir conf_dir}.each do |key|
           directory node["chef_client"][key] do
             recursive true
@@ -59,13 +63,8 @@ module Opscode
             else
               mode 00755
             end
-            if chef_server
-              owner "chef"
-              group "chef"
-            else
-              owner root_user
-              group root_group
-            end
+            owner chef_user
+            group chef_group
           end
         end
       end
